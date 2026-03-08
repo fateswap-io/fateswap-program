@@ -141,4 +141,14 @@ pub mod fateswap {
     ) -> Result<()> {
         instructions::create_lp_metadata::handler(ctx, name, symbol, uri)
     }
+
+    /// Update Metaplex token metadata for the LP mint (authority only)
+    pub fn update_lp_metadata(
+        ctx: Context<UpdateLpMetadata>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        instructions::update_lp_metadata::handler(ctx, name, symbol, uri)
+    }
 }

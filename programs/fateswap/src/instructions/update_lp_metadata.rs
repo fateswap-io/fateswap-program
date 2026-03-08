@@ -3,15 +3,10 @@ use anchor_lang::solana_program::program::invoke_signed;
 use anchor_lang::solana_program::instruction::{AccountMeta, Instruction};
 use crate::state::*;
 use crate::errors::*;
-
-/// Metaplex Token Metadata program ID: metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s
-pub const TOKEN_METADATA_PROGRAM_ID: Pubkey = Pubkey::new_from_array([
-    11, 112, 101, 177, 227, 209, 124, 69, 56, 157, 82, 127, 107, 4, 195, 205,
-    88, 184, 108, 115, 26, 160, 253, 181, 73, 182, 209, 188, 3, 248, 41, 70,
-]);
+use crate::instructions::create_lp_metadata::{TOKEN_METADATA_PROGRAM_ID, borsh_string};
 
 #[derive(Accounts)]
-pub struct CreateLpMetadata<'info> {
+pub struct UpdateLpMetadata<'info> {
     #[account(
         seeds = [b"clearing_house"],
         bump,
@@ -19,18 +14,11 @@ pub struct CreateLpMetadata<'info> {
     )]
     pub clearing_house: Account<'info, ClearingHouseState>,
 
-    /// CHECK: Metadata PDA — created by Metaplex program
+    /// CHECK: Metadata PDA — validated by Metaplex program
     #[account(mut)]
     pub metadata: AccountInfo<'info>,
 
-    /// CHECK: LP mint PDA
-    #[account(
-        seeds = [b"lp_mint"],
-        bump = clearing_house.lp_mint_bump,
-    )]
-    pub lp_mint: AccountInfo<'info>,
-
-    /// CHECK: LP mint authority PDA (signs the CPI)
+    /// CHECK: LP mint authority PDA (update authority + signer for CPI)
     #[account(
         seeds = [b"lp_authority"],
         bump = clearing_house.lp_authority_bump,
@@ -43,13 +31,10 @@ pub struct CreateLpMetadata<'info> {
     /// CHECK: Metaplex Token Metadata program
     #[account(address = TOKEN_METADATA_PROGRAM_ID)]
     pub token_metadata_program: AccountInfo<'info>,
-
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn handler(
-    ctx: Context<CreateLpMetadata>,
+    ctx: Context<UpdateLpMetadata>,
     name: String,
     symbol: String,
     uri: String,
@@ -58,16 +43,16 @@ pub fn handler(
     require!(symbol.len() <= 10, FateSwapError::InvalidConfig);
     require!(uri.len() <= 200, FateSwapError::InvalidConfig);
 
-    // Build CreateMetadataAccountV3 instruction data manually
-    // Discriminator: 33
-    let mut data = vec![33u8];
+    // Build UpdateMetadataAccountV2 instruction data manually
+    // Discriminator: 15
+    let mut data = vec![15u8];
 
-    // DataV2 struct (borsh-serialized):
-    // name: String
+    // data: Option<DataV2> = Some(...)
+    data.push(1); // Some
+
+    // DataV2:
     borsh_string(&mut data, &name);
-    // symbol: String
     borsh_string(&mut data, &symbol);
-    // uri: String
     borsh_string(&mut data, &uri);
     // seller_fee_basis_points: u16
     data.extend_from_slice(&0u16.to_le_bytes());
@@ -78,20 +63,19 @@ pub fn handler(
     // uses: Option<Uses> = None
     data.push(0);
 
-    // is_mutable: bool = true
-    data.push(1);
-
-    // collection_details: Option<CollectionDetails> = None
+    // update_authority: Option<Pubkey> = None (keep current)
     data.push(0);
+
+    // primary_sale_happened: Option<bool> = None
+    data.push(0);
+
+    // is_mutable: Option<bool> = Some(true)
+    data.push(1); // Some
+    data.push(1); // true
 
     let accounts = vec![
         AccountMeta::new(*ctx.accounts.metadata.key, false),
-        AccountMeta::new_readonly(*ctx.accounts.lp_mint.key, false),
-        AccountMeta::new_readonly(*ctx.accounts.lp_authority.key, true), // mint authority, signer
-        AccountMeta::new(*ctx.accounts.authority.key, true),             // payer
-        AccountMeta::new_readonly(*ctx.accounts.authority.key, false),   // update authority
-        AccountMeta::new_readonly(ctx.accounts.system_program.key(), false),
-        AccountMeta::new_readonly(ctx.accounts.rent.key(), false),
+        AccountMeta::new_readonly(*ctx.accounts.lp_authority.key, true), // update authority, signer
     ];
 
     let ix = Instruction {
@@ -108,20 +92,10 @@ pub fn handler(
         &ix,
         &[
             ctx.accounts.metadata.to_account_info(),
-            ctx.accounts.lp_mint.to_account_info(),
             ctx.accounts.lp_authority.to_account_info(),
-            ctx.accounts.authority.to_account_info(),
-            ctx.accounts.system_program.to_account_info(),
-            ctx.accounts.rent.to_account_info(),
         ],
         signer_seeds,
     )?;
 
     Ok(())
-}
-
-pub fn borsh_string(buf: &mut Vec<u8>, s: &str) {
-    let bytes = s.as_bytes();
-    buf.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
-    buf.extend_from_slice(bytes);
 }

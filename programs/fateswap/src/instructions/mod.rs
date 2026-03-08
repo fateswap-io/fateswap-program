@@ -10,6 +10,7 @@ pub mod pause;
 pub mod update_config;
 pub mod update_settler;
 pub mod create_lp_metadata;
+pub mod update_lp_metadata;
 
 pub use initialize::*;
 pub use deposit_sol::*;
@@ -23,3 +24,4 @@ pub use pause::*;
 pub use update_config::*;
 pub use update_settler::*;
 pub use create_lp_metadata::*;
+pub use update_lp_metadata::*;
