@@ -89,6 +89,15 @@ pub mod fateswap {
         instructions::set_referrer::handler(ctx, referrer_key)
     }
 
+    /// Admin set referrer (settler-signed variant, no player signature needed)
+    pub fn admin_set_referrer(
+        ctx: Context<AdminSetReferrer>,
+        player_key: Pubkey,
+        referrer_key: Pubkey,
+    ) -> Result<()> {
+        instructions::admin_set_referrer::handler(ctx, player_key, referrer_key)
+    }
+
     /// Pause/unpause protocol (authority only)
     pub fn pause(ctx: Context<Pause>, paused: bool) -> Result<()> {
         instructions::pause::handler(ctx, paused)
