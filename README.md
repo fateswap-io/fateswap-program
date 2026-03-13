@@ -1,6 +1,6 @@
 # FateSwap Program
 
-Solana on-chain program for [FateSwap](https://fateswap.io) — a provably fair prediction market where you trade at the price you believe in.
+Solana on-chain program for [FateSwap](https://fateswap.io) — a Solana DEX that fuses memecoin trading with provably fair, on-chain gambling.
 
 ## Program ID
 
@@ -12,7 +12,7 @@ EHYqhQQLKRy1Don3p57B3FozPM8TVHKip6tsSx9Nhp4k
 
 ## Overview
 
-FateSwap is a DEX-framed prediction market built on Solana. Users place "fate orders" at a chosen multiplier (1.01x–10x), and outcomes are determined using a provably fair system where the server seed is committed on-chain before the trade is placed.
+FateSwap is a Solana DEX that fuses memecoin trading with on-chain gambling. Users place "fate orders" at a chosen multiplier (1.01x–10x), and outcomes are determined using a provably fair system where the server seed is committed on-chain before the trade is placed.
 
 ### Instructions
 

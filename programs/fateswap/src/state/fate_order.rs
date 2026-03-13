@@ -16,7 +16,7 @@ impl Default for FateOrderStatus {
 }
 
 /// FateOrder state account (195 bytes including 8-byte discriminator)
-/// Represents a single prediction market order
+/// Represents a single fate order
 #[account]
 pub struct FateOrder {
     /// Player who placed the order
