@@ -87,6 +87,13 @@ pub fn handler(ctx: Context<SetReferrer>, referrer_key: Pubkey) -> Result<()> {
         Pubkey::default()
     };
 
+    // Block circular referral (tier-2 self-referral)
+    let tier2_referrer = if tier2_referrer == ctx.accounts.player.key() {
+        Pubkey::default()
+    } else {
+        tier2_referrer
+    };
+
     player_state.tier2_referrer = tier2_referrer;
 
     // Emit event

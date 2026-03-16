@@ -272,12 +272,15 @@ pub fn handler(
             }
         }
 
-        // 2. Tier-2 referral reward
+        // 2. Tier-2 referral reward (skip if tier-2 referrer is the player — circular referral)
         if clearing_house.tier2_referral_bps > 0 {
             if let (Some(ref mut tier2_ref), Some(ref mut tier2_rs)) = (
                 ctx.accounts.tier2_referrer.as_mut(),
                 ctx.accounts.tier2_referral_state.as_mut(),
             ) {
+                if tier2_ref.key() == ctx.accounts.player.key() {
+                    // Skip: circular referral — player would earn tier-2 on own loss
+                } else {
                 let reward = amount
                     .checked_mul(clearing_house.tier2_referral_bps as u64)
                     .ok_or(FateSwapError::MathOverflow)?
@@ -314,6 +317,7 @@ pub fn handler(
                         });
                     }
                 }
+                } // else (not circular)
             }
         }
 
